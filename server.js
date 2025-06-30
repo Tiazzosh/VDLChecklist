@@ -31,6 +31,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // Create a new pool of connections to the database
 const pool = new Pool({
   connectionString: connectionString,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // =================================================================
