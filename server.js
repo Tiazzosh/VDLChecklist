@@ -19,6 +19,11 @@ app.use(express.json());
 // =================================================================
 //                  Database and Secrets
 // =================================================================
+
+// --- DEBUGGING STEP ---
+console.log('DATABASE_URL from environment:', process.env.DATABASE_URL);
+// --- END DEBUGGING STEP ---
+
 // It's best practice to get these from environment variables
 const connectionString = process.env.DATABASE_URL;
 const JWT_SECRET = process.env.JWT_SECRET;
