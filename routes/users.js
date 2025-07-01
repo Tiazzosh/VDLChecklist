@@ -51,7 +51,7 @@ module.exports = function(pool) {
                 'INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7)',
                 [username, hashedPassword, name, surname, email, job_role, false]
             );
-            res.status(201).json({ message: 'User registered successfully!' });
+            res.status(200).json({ message: 'User registered successfully!' });
         } catch (error) {
             console.error('Registration error:', error);
             if (error.code === '23505') {
