@@ -12,6 +12,7 @@ const pool = new Pool({
 });
 
 // Middleware
+app.options('*', cors()); // Handle preflight requests
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
