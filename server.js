@@ -8,7 +8,10 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*'
+}));
+
 app.use(express.json());
 
 const connectionString = process.env.DATABASE_URL;
