@@ -146,7 +146,65 @@ app.post('/reset-password', async (req, res) => {
 });
 
 // --- ADMIN AND USER MANAGEMENT ENDPOINTS ---
-// ... all other endpoints like /register-admin, /register, /api/users ...
+/ SECURE endpoint for admins to register new users
+app.post('/register', authenticateToken, isAdmin, async (req, res) => {
+  const { username, password, name, surname, email, job_role } = req.body;
+
+  if (!username || !password || !name || !surname || !email || !job_role) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await pool.query(
+      'INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username',
+      [username, hashedPassword, name, surname, email, job_role, false] // New users are never admins by default
+    );
+
+    res.status(201).json({
+      message: 'User registered successfully!',
+      user: newUser.rows[0],
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    if (error.code === '23505') { // PostgreSQL unique violation error code
+      return res.status(400).json({ message: 'Username or email already exists.' });
+    }
+    res.status(500).json({ message: 'An error occurred on the server.' });
+  }
+});
+
+// Endpoint to create the VERY FIRST admin user
+app.post('/register-admin', async (req, res) => {
+    const { username, password, name, surname, email, job_role, secret } = req.body;
+
+    if (secret !== ADMIN_REGISTRATION_SECRET) {
+        return res.status(403).json({ message: 'Invalid secret for admin registration.' });
+    }
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.query(
+            'INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [username, hashedPassword, name, surname, email, job_role, true] // Set is_admin to TRUE
+        );
+        res.status(201).json({ message: 'Admin user registered successfully!' });
+    } catch (error) {
+        console.error('Admin registration error:', error);
+        res.status(500).json({ message: 'An error occurred during admin registration.' });
+    }
+});
+
+// SECURE endpoint for admins to get all users
+app.get('/api/users', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, username, name, surname, email, job_role, is_admin FROM users ORDER BY id');
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ message: 'An error occurred on the server.' });
+    }
+});
 
 // Start Server
 const PORT = process.env.PORT || 3000;
