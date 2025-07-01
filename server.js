@@ -146,7 +146,7 @@ app.post('/reset-password', async (req, res) => {
 });
 
 // --- ADMIN AND USER MANAGEMENT ENDPOINTS ---
-/ SECURE endpoint for admins to register new users
+// SECURE endpoint for admins to register new users
 app.post('/register', authenticateToken, isAdmin, async (req, res) => {
   const { username, password, name, surname, email, job_role } = req.body;
 
