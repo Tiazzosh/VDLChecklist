@@ -7,18 +7,15 @@ const nodemailer = require('nodemailer');
 module.exports = function(pool) {
     const router = express.Router();
 
-    // Nodemailer Transporter Setup
     const transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: process.env.EMAIL_PORT,
-        secure: false, // true for 465, false for other ports
+        secure: false,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
     });
-
-    // === ROUTES ===
 
     // POST /login
     router.post('/login', async (req, res) => {
@@ -29,17 +26,11 @@ module.exports = function(pool) {
         try {
             const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
             const user = result.rows[0];
-            if (!user) {
-                return res.status(401).json({ message: 'Invalid credentials.' });
-            }
+            if (!user) return res.status(401).json({ message: 'Invalid credentials.' });
 
             const isPasswordCorrect = await bcrypt.compare(password, user.password);
             if (isPasswordCorrect) {
-                const token = jwt.sign(
-                    { userId: user.id, username: user.username, isAdmin: user.is_admin },
-                    process.env.JWT_SECRET,
-                    { expiresIn: '1d' }
-                );
+                const token = jwt.sign({ userId: user.id, username: user.username, isAdmin: user.is_admin }, process.env.JWT_SECRET, { expiresIn: '1d' });
                 res.json({ success: true, token: token, isAdmin: user.is_admin });
             } else {
                 res.status(401).json({ message: 'Invalid credentials.' });
@@ -56,29 +47,22 @@ module.exports = function(pool) {
         try {
             const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
             const user = userResult.rows[0];
-
             if (user) {
                 const resetToken = crypto.randomBytes(32).toString('hex');
                 const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-                const tokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+                const tokenExpiry = new Date(Date.now() + 3600000);
 
-                await pool.query(
-                    'UPDATE users SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3',
-                    [hashedToken, tokenExpiry, user.id]
-                );
-
+                await pool.query('UPDATE users SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3', [hashedToken, tokenExpiry, user.id]);
                 const resetUrl = `${process.env.FRONTEND_URL}?token=${resetToken}`;
 
                 await transporter.sendMail({
                     to: user.email,
-                    from: 'your-verified-sender@example.com', // 🚨 Use your verified SendGrid sender email
+                    from: 'your-verified-sender@example.com', // 🚨 Change this to your actual verified sender email
                     subject: 'Your Password Reset Request',
                     text: `You requested a password reset. Click this link to complete the process: ${resetUrl}`,
                 });
             }
-            
             res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
-
         } catch (error) {
             console.error('Forgot password error:', error);
             res.status(500).json({ message: 'Server error.' });
@@ -90,21 +74,12 @@ module.exports = function(pool) {
         const { token, newPassword } = req.body;
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
         try {
-            const result = await pool.query(
-                'SELECT * FROM users WHERE password_reset_token = $1 AND password_reset_expires > NOW()',
-                [hashedToken]
-            );
+            const result = await pool.query('SELECT * FROM users WHERE password_reset_token = $1 AND password_reset_expires > NOW()', [hashedToken]);
             const user = result.rows[0];
-
-            if (!user) {
-                return res.status(400).json({ message: 'Token is invalid or has expired.' });
-            }
+            if (!user) return res.status(400).json({ message: 'Token is invalid or has expired.' });
 
             const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-            await pool.query(
-                'UPDATE users SET password = $1, password_reset_token = NULL, password_reset_expires = NULL WHERE id = $2',
-                [hashedNewPassword, user.id]
-            );
+            await pool.query('UPDATE users SET password = $1, password_reset_token = NULL, password_reset_expires = NULL WHERE id = $2', [hashedNewPassword, user.id]);
             res.json({ message: 'Password has been reset successfully.' });
         } catch (error) {
             console.error('Reset password error:', error);
@@ -120,10 +95,7 @@ module.exports = function(pool) {
         }
         try {
             const hashedPassword = await bcrypt.hash(password, 10);
-            await pool.query(
-                'INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-                [username, hashedPassword, name, surname, email, job_role, true]
-            );
+            await pool.query('INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7)', [username, hashedPassword, name, surname, email, job_role, true]);
             res.status(201).json({ message: 'Admin user registered successfully!' });
         } catch (error) {
             console.error('Admin registration error:', error);

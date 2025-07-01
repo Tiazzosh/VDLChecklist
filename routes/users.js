@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 module.exports = function(pool) {
     const router = express.Router();
 
-    // --- Middleware (Specific to this router) ---
+    // --- Middleware ---
     const authenticateToken = (req, res, next) => {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
@@ -19,13 +19,12 @@ module.exports = function(pool) {
     };
 
     const isAdmin = (req, res, next) => {
-        if (!req.user.isAdmin) {
+        if (!req.user || !req.user.isAdmin) {
             return res.status(403).json({ message: 'Admin access required.' });
         }
         next();
     };
 
-    // === ROUTES ===
     // All routes in this file are automatically prefixed with /api
 
     // GET /api/users
@@ -47,10 +46,7 @@ module.exports = function(pool) {
         }
         try {
             const hashedPassword = await bcrypt.hash(password, 10);
-            await pool.query(
-                'INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-                [username, hashedPassword, name, surname, email, job_role, false]
-            );
+            await pool.query('INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7)', [username, hashedPassword, name, surname, email, job_role, false]);
             res.status(200).json({ message: 'User registered successfully!' });
         } catch (error) {
             console.error('Registration error:', error);
