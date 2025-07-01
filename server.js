@@ -1,16 +1,23 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { Pool } = require('pg');
 
 const app = express();
+
+//Create the DB pool once
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
 // Middleware
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// Import and use routes
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
+// Import and use routes, passsing the pool to them
+const authRoutes = require('./routes/auth')(pool);
+const userRoutes = require('./routes/users')(pool);
 
 app.use('/', authRoutes); // Handles /login, /forgot-password, etc.
 app.use('/api', userRoutes); // Handles /api/register, /api/users, etc.
