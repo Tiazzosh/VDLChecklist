@@ -118,9 +118,9 @@ app.post('/forgot-password', async (req, res) => {
 
     await transporter.sendMail({
       to: user.email,
-      from: 'your-verified-sender@example.com', // Use your verified SendGrid sender email
+      from: 'mfalchi@videalert.com',
       subject: 'Your Password Reset Request',
-      text: `You requested a password reset. Click this link to reset it: ${resetUrl}`,
+      text: `You requested a password reset for your Videalert Account. Click this link to reset it: ${resetUrl}`,
     });
     res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
   } catch (error) {
