@@ -21,7 +21,7 @@ const authRoutes = require('./routes/auth')(pool);
 const userRoutes = require('./routes/users')(pool);
 
 app.use('/', authRoutes); // Handles /login, /forgot-password, etc.
-app.use('/api', userRoutes); // Handles /api/register, /api/users, etc.
+//app.use('/api', userRoutes); // Handles /api/register, /api/users, etc.
 
 // Start the Server
 const PORT = process.env.PORT || 3000;
