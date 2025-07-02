@@ -19,9 +19,7 @@ module.exports = function(pool) {
 
     router.post('/login', async (req, res) => {
         const { username, password } = req.body;
-        if (!username || !password) {
-            return res.status(400).json({ message: 'Username and password are required.' });
-        }
+        if (!username || !password) return res.status(400).json({ message: 'Username and password are required.' });
         try {
             const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
             const user = result.rows[0];
@@ -83,9 +81,7 @@ module.exports = function(pool) {
 
     router.post('/register-admin', async (req, res) => {
         const { username, password, name, surname, email, job_role, secret } = req.body;
-        if (secret !== process.env.ADMIN_REGISTRATION_SECRET) {
-            return res.status(403).json({ message: 'Invalid secret for admin registration.' });
-        }
+        if (secret !== process.env.ADMIN_REGISTRATION_SECRET) return res.status(403).json({ message: 'Invalid secret for admin registration.' });
         try {
             const hashedPassword = await bcrypt.hash(password, 10);
             await pool.query('INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7)', [username, hashedPassword, name, surname, email, job_role, true]);

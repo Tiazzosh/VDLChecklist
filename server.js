@@ -10,8 +10,9 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-// Middleware
-app.use(cors({ origin: '*' }));
+// Middleware to handle CORS and preflight requests
+app.options('*', cors()); // Handles the preflight OPTIONS request
+app.use(cors({ origin: '*' })); // Handles the actual requests
 app.use(express.json());
 
 // Import and use routes
@@ -21,6 +22,7 @@ const userRoutes = require('./routes/users')(pool);
 app.use('/', authRoutes);
 app.use('/api', userRoutes);
 
+// Start the Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
