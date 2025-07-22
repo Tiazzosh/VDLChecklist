@@ -51,7 +51,7 @@ module.exports = function(pool) {
                 const resetUrl = `${process.env.FRONTEND_URL}?token=${resetToken}`;
                 await transporter.sendMail({
                     to: user.email,
-                    from: 'your-verified-sender@example.com', // 🚨 Change this
+                    from: 'mfalchi@videalert.com',
                     subject: 'Your Password Reset Request',
                     text: `Click this link to reset your password: ${resetUrl}`,
                 });

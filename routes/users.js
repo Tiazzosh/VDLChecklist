@@ -36,8 +36,12 @@ module.exports = function(pool) {
         if (!username || !password || !name || !surname || !email || !job_role) return res.status(400).json({ message: 'All fields are required.' });
         try {
             const hashedPassword = await bcrypt.hash(password, 10);
-            await pool.query('INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7)', [username, hashedPassword, name, surname, email, job_role, false]);
-            res.status(200).json({ message: 'User registered successfully!' });
+            const newUserResult = await pool.query(
+                'INSERT INTO users (username, password, name, surname, email, job_role, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, name, surname, email, job_role, is_admin',
+                [username, hashedPassword, name, surname, email, job_role, false]
+            );
+            const newUser = newUserResult.rows[0];
+            res.status(200).json({ message: 'User registered successfully!', user: newUser });
         } catch (error) {
             console.error('Registration error:', error);
             if (error.code === '23505') return res.status(400).json({ message: 'Username or email already exists.' });
